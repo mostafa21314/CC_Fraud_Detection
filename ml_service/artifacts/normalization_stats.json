@@ -1,0 +1,16 @@
+{
+  "avg_transaction_per_user": {
+    "min": -38.901666666666664,
+    "max": 224.51399999999998,
+    "mean": 43.731598405,
+    "std": 17.632983813945845,
+    "column_name": "avg_transaction_per_user_calculated"
+  },
+  "avg_transaction_per_card": {
+    "min": 38.092360022931395,
+    "max": 53.03438223938224,
+    "mean": 43.731598404999986,
+    "std": 0.8004217304284933,
+    "column_name": "avg_transaction_per_card_calculated"
+  }
+}

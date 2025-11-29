@@ -118,6 +118,15 @@ def load_preprocessing_stats():
         # Load processed data to get MCC codes list
         df_processed = pd.read_csv(CSV_PATH)
         
+        # Load normalization stats for avg_transaction_per_user and avg_transaction_per_card
+        normalization_stats_path = ARTIFACTS_DIR / "normalization_stats.json"
+        norm_stats = {}
+        if normalization_stats_path.exists():
+            with open(normalization_stats_path, "r") as f:
+                norm_stats = json.load(f)
+        else:
+            print(f"[WARNING] Normalization stats not found at {normalization_stats_path}")
+        
         stats = {
             # Amount_float statistics for z-score normalization
             # Calculate z-score as (Amount_float - mean) / std
@@ -130,11 +139,19 @@ def load_preprocessing_stats():
             
             # Get all MCC codes from feature names
             "mcc_codes": [col for col in df_processed.columns if col.startswith("MCC_")],
+            
+            # Average transaction normalization stats (MinMax)
+            "avg_transaction_per_user_min": norm_stats.get("avg_transaction_per_user", {}).get("min", 0.0),
+            "avg_transaction_per_user_max": norm_stats.get("avg_transaction_per_user", {}).get("max", 1.0),
+            "avg_transaction_per_card_min": norm_stats.get("avg_transaction_per_card", {}).get("min", 0.0),
+            "avg_transaction_per_card_max": norm_stats.get("avg_transaction_per_card", {}).get("max", 1.0),
         }
         
         print(f"[PREPROC] Loaded preprocessing stats:")
         print(f"  - Amount_float: mean={stats['amount_float_mean']:.2f}, std={stats['amount_float_std']:.2f}")
         print(f"  - seconds_1990: min={stats['seconds_1990_min']:.0f}, max={stats['seconds_1990_max']:.0f}")
+        print(f"  - avg_transaction_per_user: min={stats['avg_transaction_per_user_min']:.6f}, max={stats['avg_transaction_per_user_max']:.6f}")
+        print(f"  - avg_transaction_per_card: min={stats['avg_transaction_per_card_min']:.6f}, max={stats['avg_transaction_per_card_max']:.6f}")
         print(f"  - MCC codes: {len(stats['mcc_codes'])} codes")
         
         return stats
@@ -148,6 +165,10 @@ def load_preprocessing_stats():
             "seconds_1990_min": 0.0,
             "seconds_1990_max": 1.0,
             "mcc_codes": [],
+            "avg_transaction_per_user_min": 0.0,
+            "avg_transaction_per_user_max": 1.0,
+            "avg_transaction_per_card_min": 0.0,
+            "avg_transaction_per_card_max": 1.0,
         }
 
 # Load preprocessing statistics at startup
@@ -174,6 +195,22 @@ def calculate_amount_zscore(amount: float) -> float:
     if std == 0:
         return 0.0
     return (amount - mean) / std
+
+def normalize_avg_transaction_per_user(raw_value: float) -> float:
+    """Normalize average transaction per user using MinMax normalization."""
+    min_val = _preprocessing_stats["avg_transaction_per_user_min"]
+    max_val = _preprocessing_stats["avg_transaction_per_user_max"]
+    if max_val == min_val:
+        return 0.0
+    return (raw_value - min_val) / (max_val - min_val)
+
+def normalize_avg_transaction_per_card(raw_value: float) -> float:
+    """Normalize average transaction per card using MinMax normalization."""
+    min_val = _preprocessing_stats["avg_transaction_per_card_min"]
+    max_val = _preprocessing_stats["avg_transaction_per_card_max"]
+    if max_val == min_val:
+        return 0.0
+    return (raw_value - min_val) / (max_val - min_val)
 
 def one_hot_encode_mcc(mcc: int) -> Dict[str, float]:
     """One-hot encode MCC code."""
@@ -218,7 +255,7 @@ def preprocess_client_input(client_data: Dict[str, Any]) -> Dict[str, float]:
     
     Client sends:
     - amount_float, amount_is_refund
-    - avg_transaction_per_card_norm, avg_transaction_per_user_norm
+    - avg_transaction_per_card (raw, unnormalized), avg_transaction_per_user (raw, unnormalized)
     - country_development (string)
     - transaction_datetime (ISO string)
     - mcc (integer)
@@ -238,11 +275,19 @@ def preprocess_client_input(client_data: Dict[str, Any]) -> Dict[str, float]:
     # Start with direct mappings
     features = {
         "Amount_IsRefund": float(client_data.get("Amount_IsRefund", client_data.get("amount_is_refund", 0))),
-        "avg_transaction_per_card_norm": float(client_data.get("avg_transaction_per_card_norm", 0.0)),
-        "avg_transaction_per_user_norm": float(client_data.get("avg_transaction_per_user_norm", 0.0)),
         "OnlineFlag": float(client_data.get("OnlineFlag", client_data.get("online_flag", 0))),
         "HasError": float(client_data.get("HasError", client_data.get("has_error", 0))),
     }
+    
+    # Normalize average transaction per user and per card from raw values
+    # User provides raw (unnormalized) values, we normalize them here
+    avg_transaction_per_user_raw = client_data.get("avg_transaction_per_user", 
+                                                   client_data.get("avg_transaction_per_user_norm", 0.0))
+    avg_transaction_per_card_raw = client_data.get("avg_transaction_per_card",
+                                                   client_data.get("avg_transaction_per_card_norm", 0.0))
+    
+    features["avg_transaction_per_user_norm"] = normalize_avg_transaction_per_user(float(avg_transaction_per_user_raw))
+    features["avg_transaction_per_card_norm"] = normalize_avg_transaction_per_card(float(avg_transaction_per_card_raw))
     
     # Calculate Amount_zscore from Amount_float
     amount_float = client_data.get("Amount_float", client_data.get("amount_float", 0.0))
