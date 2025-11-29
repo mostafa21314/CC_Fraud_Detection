@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
+import asyncio
+import threading
+import time
 
 import json
 import numpy as np
@@ -104,6 +107,13 @@ service = FraudModelService()
 # In-memory cache to store predictions for feedback lookup
 # Key: transaction_id, Value: {features, model_prob_fraud, model_prob_not_fraud, model_label}
 _prediction_cache: Dict[str, Dict[str, Any]] = {}
+
+# Online learning state tracking
+_online_learning_state = {
+    "last_feedback_count": 0,  # Number of feedback samples processed last time
+    "last_update_time": datetime.now(),  # When we last ran online SGD
+    "is_updating": False,  # Flag to prevent concurrent updates
+}
 
 # ------------------------
 # Preprocessing utilities
@@ -491,6 +501,130 @@ def submit_feedback(req: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
 
 # ------------------------
+# Online Learning Background Task
+# ------------------------
+
+def count_feedback_samples() -> int:
+    """Count the number of feedback samples in the log file."""
+    if not FEEDBACK_LOG_PATH.exists():
+        return 0
+    
+    count = 0
+    try:
+        with FEEDBACK_LOG_PATH.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                    # Only count records with features and true_label (usable for training)
+                    if "features" in rec and "true_label" in rec:
+                        count += 1
+                except json.JSONDecodeError:
+                    continue
+    except Exception as e:
+        print(f"[ONLINE-LEARNING] Error counting feedback: {e}")
+    
+    return count
+
+def run_online_sgd_update():
+    """Run online SGD update by calling the online_sgd_update.py main function."""
+    if _online_learning_state["is_updating"]:
+        print("[ONLINE-LEARNING] Update already in progress, skipping...")
+        return
+    
+    _online_learning_state["is_updating"] = True
+    try:
+        print("[ONLINE-LEARNING] Starting online SGD update...")
+        
+        # Import and run the online SGD update
+        from online_sgd_update import main as online_sgd_main
+        
+        # Run in a separate thread to avoid blocking
+        online_sgd_main()
+        
+        # Reload the model after update
+        print("[ONLINE-LEARNING] Reloading model after update...")
+        global service
+        service = FraudModelService()
+        
+        # Update state
+        current_count = count_feedback_samples()
+        _online_learning_state["last_feedback_count"] = current_count
+        _online_learning_state["last_update_time"] = datetime.now()
+        
+        print(f"[ONLINE-LEARNING] Online SGD update completed. Processed {current_count} feedback samples.")
+        
+    except Exception as e:
+        print(f"[ONLINE-LEARNING] Error during online SGD update: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        _online_learning_state["is_updating"] = False
+
+def check_and_run_online_learning():
+    """Check if conditions are met to run online learning, then run it."""
+    current_count = count_feedback_samples()
+    last_count = _online_learning_state["last_feedback_count"]
+    last_update = _online_learning_state["last_update_time"]
+    now = datetime.now()
+    
+    # Check conditions:
+    # 1. At least 1 feedback sample exists
+    # 2. Either: 15 minutes have passed OR 67 new samples since last update
+    time_since_update = (now - last_update).total_seconds() / 60  # minutes
+    new_samples = current_count - last_count
+    
+    should_run = False
+    reason = ""
+    
+    if current_count == 0:
+        # No feedback samples yet
+        return
+    
+    if time_since_update >= 15:
+        should_run = True
+        reason = f"15 minutes have passed (last update: {time_since_update:.1f} min ago)"
+    elif new_samples >= 67:
+        should_run = True
+        reason = f"67 new feedback samples received ({new_samples} new samples)"
+    
+    if should_run:
+        print(f"[ONLINE-LEARNING] Triggering update: {reason}")
+        # Run in a separate thread to avoid blocking the API
+        thread = threading.Thread(target=run_online_sgd_update, daemon=True)
+        thread.start()
+
+def background_online_learning_loop():
+    """Background task that checks every minute if online learning should run."""
+    while True:
+        try:
+            check_and_run_online_learning()
+        except Exception as e:
+            print(f"[ONLINE-LEARNING] Error in background loop: {e}")
+        
+        # Sleep for 1 minute before checking again
+        time.sleep(60)
+
+# Start background task when app starts
+@app.on_event("startup")
+async def startup_event():
+    """Start background online learning task on app startup."""
+    print("[ONLINE-LEARNING] Starting background online learning task...")
+    print("[ONLINE-LEARNING] Will run every 15 minutes OR every 67 new feedback samples")
+    
+    # Initialize feedback count
+    _online_learning_state["last_feedback_count"] = count_feedback_samples()
+    _online_learning_state["last_update_time"] = datetime.now()
+    
+    # Start background thread
+    thread = threading.Thread(target=background_online_learning_loop, daemon=True)
+    thread.start()
+    print("[ONLINE-LEARNING] Background task started.")
+
+
+# ------------------------
 # Run server
 # ------------------------
 
@@ -510,6 +644,10 @@ if __name__ == '__main__':
     ║   - POST /predict  - Make fraud predictions              ║
     ║   - POST /feedback - Submit feedback for online learning ║
     ║   - GET  /health   - Health check                        ║
+    ║                                                          ║
+    ║   Online Learning:                                       ║
+    ║   - Runs every 15 minutes OR every 67 new samples       ║
+    ║   - Model auto-reloads after update                     ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     
