@@ -1,0 +1,203 @@
+{
+  "info": {
+    "name": "Fraud Detection API - Local Tests",
+    "_postman_id": "c7c5bd9e-0000-0000-0000-000000000000",
+    "description": "Postman collection to test the local Fraud Detection API (health, predict, feedback, error case).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health - GET /health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Has status and detail fields\", function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json).to.have.property(\"status\", \"ok\");",
+              "  pm.expect(json).to.have.property(\"detail\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Predict - POST /predict (valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"features\": {\n    \"avg_transaction_per_user_norm\": 0.15,\n    \"avg_transaction_per_card_norm\": 0.08,\n    \"seconds_1990\": 1234567890.0,\n    \"Amount_zscore\": 1.2,\n    \"OnlineFlag\": 1,\n    \"HasError\": 0,\n    \"DevCat_Developing\": 1,\n    \"DevCat_UnderDeveloped\": 0,\n    \"DevCat_Developed\": 0,\n    \"Amount_IsRefund\": 0,\n    \"MCC_1711\": 0,\n    \"MCC_3000\": 0,\n    \"MCC_3001\": 0,\n    \"MCC_3005\": 0,\n    \"MCC_3006\": 0,\n    \"MCC_3007\": 0,\n    \"MCC_3008\": 0,\n    \"MCC_3009\": 0,\n    \"MCC_3058\": 0,\n    \"MCC_3066\": 0,\n    \"MCC_3075\": 0,\n    \"MCC_3132\": 0,\n    \"MCC_3144\": 0,\n    \"MCC_3174\": 0,\n    \"MCC_3256\": 0,\n    \"MCC_3260\": 0,\n    \"MCC_3359\": 0,\n    \"MCC_3387\": 0,\n    \"MCC_3389\": 0,\n    \"MCC_3390\": 0,\n    \"MCC_3393\": 0,\n    \"MCC_3395\": 0,\n    \"MCC_3405\": 0,\n    \"MCC_3504\": 0,\n    \"MCC_3509\": 0,\n    \"MCC_3596\": 0,\n    \"MCC_3640\": 0,\n    \"MCC_3684\": 0,\n    \"MCC_3722\": 0,\n    \"MCC_3730\": 0,\n    \"MCC_3771\": 0,\n    \"MCC_3775\": 0,\n    \"MCC_3780\": 0,\n    \"MCC_4111\": 0,\n    \"MCC_4112\": 0,\n    \"MCC_4121\": 0,\n    \"MCC_4131\": 0,\n    \"MCC_4214\": 0,\n    \"MCC_4411\": 0,\n    \"MCC_4511\": 0,\n    \"MCC_4722\": 0,\n    \"MCC_4784\": 0,\n    \"MCC_4814\": 0,\n    \"MCC_4829\": 0,\n    \"MCC_4899\": 0,\n    \"MCC_4900\": 0,\n    \"MCC_5045\": 0,\n    \"MCC_5094\": 0,\n    \"MCC_5192\": 0,\n    \"MCC_5193\": 0,\n    \"MCC_5211\": 0,\n    \"MCC_5251\": 0,\n    \"MCC_5261\": 0,\n    \"MCC_5300\": 0,\n    \"MCC_5310\": 0,\n    \"MCC_5311\": 0,\n    \"MCC_5411\": 0,\n    \"MCC_5499\": 0,\n    \"MCC_5533\": 0,\n    \"MCC_5541\": 0,\n    \"MCC_5621\": 0,\n    \"MCC_5651\": 0,\n    \"MCC_5655\": 0,\n    \"MCC_5661\": 0,\n    \"MCC_5712\": 0,\n    \"MCC_5719\": 0,\n    \"MCC_5722\": 0,\n    \"MCC_5732\": 0,\n    \"MCC_5733\": 0,\n    \"MCC_5812\": 0,\n    \"MCC_5813\": 0,\n    \"MCC_5814\": 0,\n    \"MCC_5815\": 0,\n    \"MCC_5816\": 0,\n    \"MCC_5912\": 0,\n    \"MCC_5921\": 0,\n    \"MCC_5932\": 0,\n    \"MCC_5941\": 0,\n    \"MCC_5942\": 0,\n    \"MCC_5947\": 0,\n    \"MCC_5970\": 0,\n    \"MCC_5977\": 0,\n    \"MCC_6300\": 0,\n    \"MCC_7011\": 0,\n    \"MCC_7210\": 0,\n    \"MCC_7230\": 0,\n    \"MCC_7276\": 0,\n    \"MCC_7349\": 0,\n    \"MCC_7393\": 0,\n    \"MCC_7531\": 0,\n    \"MCC_7538\": 0,\n    \"MCC_7542\": 0,\n    \"MCC_7549\": 0,\n    \"MCC_7801\": 0,\n    \"MCC_7802\": 0,\n    \"MCC_7832\": 0,\n    \"MCC_7922\": 0,\n    \"MCC_7995\": 0,\n    \"MCC_7996\": 0,\n    \"MCC_8011\": 0,\n    \"MCC_8021\": 0,\n    \"MCC_8041\": 0,\n    \"MCC_8043\": 0,\n    \"MCC_8049\": 0,\n    \"MCC_8062\": 0,\n    \"MCC_8099\": 0,\n    \"MCC_8111\": 0,\n    \"MCC_8931\": 0,\n    \"MCC_9402\": 0\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Has all required fields\", function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json).to.have.property(\"prob_not_fraud\");",
+              "  pm.expect(json).to.have.property(\"prob_fraud\");",
+              "  pm.expect(json).to.have.property(\"is_fraud\");",
+              "  pm.expect(json).to.have.property(\"threshold\");",
+              "});",
+              "",
+              "pm.test(\"Probabilities are in [0, 1]\", function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.prob_not_fraud).to.be.within(0, 1);",
+              "  pm.expect(json.prob_fraud).to.be.within(0, 1);",
+              "});",
+              "",
+              "pm.test(\"Probabilities roughly sum to 1\", function () {",
+              "  const json = pm.response.json();",
+              "  const sum = json.prob_not_fraud + json.prob_fraud;",
+              "  pm.expect(sum).to.be.within(0.99, 1.01);",
+              "});",
+              "",
+              "pm.test(\"is_fraud is consistent with threshold\", function () {",
+              "  const json = pm.response.json();",
+              "  const expected = json.prob_fraud >= json.threshold ? 1 : 0;",
+              "  pm.expect(json.is_fraud).to.eql(expected);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Predict - POST /predict (missing feature → 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"features\": {\n    \"avg_transaction_per_user_norm\": 0.15,\n    \"avg_transaction_per_card_norm\": 0.08,\n    \"seconds_1990\": 1234567890.0,\n    \"Amount_zscore\": 1.2,\n    \"OnlineFlag\": 1,\n    \"HasError\": 0,\n    \"DevCat_Developing\": 1,\n    \"DevCat_UnderDeveloped\": 0,\n    \"DevCat_Developed\": 0,\n    \"Amount_IsRefund\": 0,\n    \"MCC_3000\": 0,\n    \"MCC_3001\": 0,\n    \"MCC_3005\": 0,\n    \"MCC_3006\": 0,\n    \"MCC_3007\": 0,\n    \"MCC_3008\": 0,\n    \"MCC_3009\": 0,\n    \"MCC_3058\": 0,\n    \"MCC_3066\": 0,\n    \"MCC_3075\": 0,\n    \"MCC_3132\": 0,\n    \"MCC_3144\": 0,\n    \"MCC_3174\": 0,\n    \"MCC_3256\": 0,\n    \"MCC_3260\": 0,\n    \"MCC_3359\": 0,\n    \"MCC_3387\": 0,\n    \"MCC_3389\": 0,\n    \"MCC_3390\": 0,\n    \"MCC_3393\": 0,\n    \"MCC_3395\": 0,\n    \"MCC_3405\": 0,\n    \"MCC_3504\": 0,\n    \"MCC_3509\": 0,\n    \"MCC_3596\": 0,\n    \"MCC_3640\": 0,\n    \"MCC_3684\": 0,\n    \"MCC_3722\": 0,\n    \"MCC_3730\": 0,\n    \"MCC_3771\": 0,\n    \"MCC_3775\": 0,\n    \"MCC_3780\": 0,\n    \"MCC_4111\": 0,\n    \"MCC_4112\": 0,\n    \"MCC_4121\": 0,\n    \"MCC_4131\": 0,\n    \"MCC_4214\": 0,\n    \"MCC_4411\": 0,\n    \"MCC_4511\": 0,\n    \"MCC_4722\": 0,\n    \"MCC_4784\": 0,\n    \"MCC_4814\": 0,\n    \"MCC_4829\": 0,\n    \"MCC_4899\": 0,\n    \"MCC_4900\": 0,\n    \"MCC_5045\": 0,\n    \"MCC_5094\": 0,\n    \"MCC_5192\": 0,\n    \"MCC_5193\": 0,\n    \"MCC_5211\": 0,\n    \"MCC_5251\": 0,\n    \"MCC_5261\": 0,\n    \"MCC_5300\": 0,\n    \"MCC_5310\": 0,\n    \"MCC_5311\": 0,\n    \"MCC_5411\": 0,\n    \"MCC_5499\": 0,\n    \"MCC_5533\": 0,\n    \"MCC_5541\": 0,\n    \"MCC_5621\": 0,\n    \"MCC_5651\": 0,\n    \"MCC_5655\": 0,\n    \"MCC_5661\": 0,\n    \"MCC_5712\": 0,\n    \"MCC_5719\": 0,\n    \"MCC_5722\": 0,\n    \"MCC_5732\": 0,\n    \"MCC_5733\": 0,\n    \"MCC_5812\": 0,\n    \"MCC_5813\": 0,\n    \"MCC_5814\": 0,\n    \"MCC_5815\": 0,\n    \"MCC_5816\": 0,\n    \"MCC_5912\": 0,\n    \"MCC_5921\": 0,\n    \"MCC_5932\": 0,\n    \"MCC_5941\": 0,\n    \"MCC_5942\": 0,\n    \"MCC_5947\": 0,\n    \"MCC_5970\": 0,\n    \"MCC_5977\": 0,\n    \"MCC_6300\": 0,\n    \"MCC_7011\": 0,\n    \"MCC_7210\": 0,\n    \"MCC_7230\": 0,\n    \"MCC_7276\": 0,\n    \"MCC_7349\": 0,\n    \"MCC_7393\": 0,\n    \"MCC_7531\": 0,\n    \"MCC_7538\": 0,\n    \"MCC_7542\": 0,\n    \"MCC_7549\": 0,\n    \"MCC_7801\": 0,\n    \"MCC_7802\": 0,\n    \"MCC_7832\": 0,\n    \"MCC_7922\": 0,\n    \"MCC_7995\": 0,\n    \"MCC_7996\": 0,\n    \"MCC_8011\": 0,\n    \"MCC_8021\": 0,\n    \"MCC_8041\": 0,\n    \"MCC_8043\": 0,\n    \"MCC_8049\": 0,\n    \"MCC_8062\": 0,\n    \"MCC_8099\": 0,\n    \"MCC_8111\": 0,\n    \"MCC_8931\": 0,\n    \"MCC_9402\": 0\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 400 for missing feature\", function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Error message mentions missing feature\", function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json).to.have.property(\"detail\");",
+              "  pm.expect(json.detail).to.include(\"Missing feature\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedback - POST /feedback (valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"features\": {\n    \"avg_transaction_per_user_norm\": 0.15,\n    \"avg_transaction_per_card_norm\": 0.08,\n    \"seconds_1990\": 1234567890.0,\n    \"Amount_zscore\": 1.2,\n    \"OnlineFlag\": 1,\n    \"HasError\": 0,\n    \"DevCat_Developing\": 1,\n    \"DevCat_UnderDeveloped\": 0,\n    \"DevCat_Developed\": 0,\n    \"Amount_IsRefund\": 0,\n    \"MCC_1711\": 0,\n    \"MCC_3000\": 0,\n    \"MCC_3001\": 0,\n    \"MCC_3005\": 0,\n    \"MCC_3006\": 0,\n    \"MCC_3007\": 0,\n    \"MCC_3008\": 0,\n    \"MCC_3009\": 0,\n    \"MCC_3058\": 0,\n    \"MCC_3066\": 0,\n    \"MCC_3075\": 0,\n    \"MCC_3132\": 0,\n    \"MCC_3144\": 0,\n    \"MCC_3174\": 0,\n    \"MCC_3256\": 0,\n    \"MCC_3260\": 0,\n    \"MCC_3359\": 0,\n    \"MCC_3387\": 0,\n    \"MCC_3389\": 0,\n    \"MCC_3390\": 0,\n    \"MCC_3393\": 0,\n    \"MCC_3395\": 0,\n    \"MCC_3405\": 0,\n    \"MCC_3504\": 0,\n    \"MCC_3509\": 0,\n    \"MCC_3596\": 0,\n    \"MCC_3640\": 0,\n    \"MCC_3684\": 0,\n    \"MCC_3722\": 0,\n    \"MCC_3730\": 0,\n    \"MCC_3771\": 0,\n    \"MCC_3775\": 0,\n    \"MCC_3780\": 0,\n    \"MCC_4111\": 0,\n    \"MCC_4112\": 0,\n    \"MCC_4121\": 0,\n    \"MCC_4131\": 0,\n    \"MCC_4214\": 0,\n    \"MCC_4411\": 0,\n    \"MCC_4511\": 0,\n    \"MCC_4722\": 0,\n    \"MCC_4784\": 0,\n    \"MCC_4814\": 0,\n    \"MCC_4829\": 0,\n    \"MCC_4899\": 0,\n    \"MCC_4900\": 0,\n    \"MCC_5045\": 0,\n    \"MCC_5094\": 0,\n    \"MCC_5192\": 0,\n    \"MCC_5193\": 0,\n    \"MCC_5211\": 0,\n    \"MCC_5251\": 0,\n    \"MCC_5261\": 0,\n    \"MCC_5300\": 0,\n    \"MCC_5310\": 0,\n    \"MCC_5311\": 0,\n    \"MCC_5411\": 0,\n    \"MCC_5499\": 0,\n    \"MCC_5533\": 0,\n    \"MCC_5541\": 0,\n    \"MCC_5621\": 0,\n    \"MCC_5651\": 0,\n    \"MCC_5655\": 0,\n    \"MCC_5661\": 0,\n    \"MCC_5712\": 0,\n    \"MCC_5719\": 0,\n    \"MCC_5722\": 0,\n    \"MCC_5732\": 0,\n    \"MCC_5733\": 0,\n    \"MCC_5812\": 0,\n    \"MCC_5813\": 0,\n    \"MCC_5814\": 0,\n    \"MCC_5815\": 0,\n    \"MCC_5816\": 0,\n    \"MCC_5912\": 0,\n    \"MCC_5921\": 0,\n    \"MCC_5932\": 0,\n    \"MCC_5941\": 0,\n    \"MCC_5942\": 0,\n    \"MCC_5947\": 0,\n    \"MCC_5970\": 0,\n    \"MCC_5977\": 0,\n    \"MCC_6300\": 0,\n    \"MCC_7011\": 0,\n    \"MCC_7210\": 0,\n    \"MCC_7230\": 0,\n    \"MCC_7276\": 0,\n    \"MCC_7349\": 0,\n    \"MCC_7393\": 0,\n    \"MCC_7531\": 0,\n    \"MCC_7538\": 0,\n    \"MCC_7542\": 0,\n    \"MCC_7549\": 0,\n    \"MCC_7801\": 0,\n    \"MCC_7802\": 0,\n    \"MCC_7832\": 0,\n    \"MCC_7922\": 0,\n    \"MCC_7995\": 0,\n    \"MCC_7996\": 0,\n    \"MCC_8011\": 0,\n    \"MCC_8021\": 0,\n    \"MCC_8041\": 0,\n    \"MCC_8043\": 0,\n    \"MCC_8049\": 0,\n    \"MCC_8062\": 0,\n    \"MCC_8099\": 0,\n    \"MCC_8111\": 0,\n    \"MCC_8931\": 0,\n    \"MCC_9402\": 0\n  },\n  \"model_prob_fraud\": 0.8732,\n  \"model_prob_not_fraud\": 0.1268,\n  \"model_label\": 1,\n  \"true_label\": 1,\n  \"metadata\": {\n    \"transaction_id\": \"txn-001\",\n    \"user_id\": \"user-42\",\n    \"source\": \"postman_test\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/feedback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "feedback"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Feedback response is ok\", function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json).to.have.property(\"status\", \"ok\");",
+              "  pm.expect(json).to.have.property(\"message\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    }
+  ]
+}

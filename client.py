@@ -128,6 +128,9 @@ async def predict(transaction_data: TransactionRequest):
                     'success': True,
                     'prediction': result.get('prediction'),
                     'confidence': result.get('confidence', 0.0),
+                    'prob_fraud': result.get('prob_fraud', 0.0),
+                    'prob_not_fraud': result.get('prob_not_fraud', 0.0),
+                    'is_fraud': result.get('is_fraud', 0),
                     'transaction_id': result.get('transaction_id')
                 }
             else:

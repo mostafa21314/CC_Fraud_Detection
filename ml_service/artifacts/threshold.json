@@ -1,0 +1,13 @@
+{
+  "threshold": 0.52,
+  "metrics_at_threshold": {
+    "precision_fraud": 0.8700322234156821,
+    "recall_fraud": 0.3909266409266409,
+    "f1_fraud": 0.5394605394605395,
+    "support_fraud": 2072
+  },
+  "global_metrics": {
+    "roc_auc": 0.9293173444601106,
+    "pr_auc": 0.47356330942979585
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "threshold": 0.52,
+  "confusion_matrix": [
+    [
+      399446,
+      36
+    ],
+    [
+      303,
+      215
+    ]
+  ],
+  "per_class": {
+    "precision": [
+      0.9992420243702923,
+      0.8565737051792829
+    ],
+    "recall": [
+      0.9999098832988721,
+      0.41505791505791506
+    ],
+    "f1": [
+      0.9995758422783901,
+      0.5591677503250976
+    ],
+    "support": [
+      399482,
+      518
+    ]
+  },
+  "fraud_metrics": {
+    "precision_fraud": 0.8565737051792829,
+    "recall_fraud": 0.41505791505791506,
+    "f1_fraud": 0.5591677503250976
+  },
+  "macro_metrics": {
+    "precision_macro": 0.9279078647747876,
+    "recall_macro": 0.7074838991783936,
+    "f1_macro": 0.7793717963017439
+  },
+  "roc_auc": 0.9324527193217147,
+  "pr_auc": 0.48272330844075506,
+  "classification_report": "              precision    recall  f1-score   support\n\n   Not Fraud       1.00      1.00      1.00    399482\n       Fraud       0.86      0.42      0.56       518\n\n    accuracy                           1.00    400000\n   macro avg       0.93      0.71      0.78    400000\nweighted avg       1.00      1.00      1.00    400000\n",
+  "n_test_samples": 400000
+}

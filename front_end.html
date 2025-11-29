@@ -178,7 +178,35 @@
 
         .result-confidence {
             font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .result-details {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+
+        .result-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .result-details td {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .result-details td:first-child {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .result-details td:last-child {
+            text-align: right;
+            font-family: 'Courier New', monospace;
         }
 
         .feedback-section {
@@ -336,30 +364,6 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <div class="checkbox-group">
-                                <input type="checkbox" id="errbin_insufficient_balance" name="errbin_insufficient_balance">
-                                <label for="errbin_insufficient_balance">Insufficient Balance</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="errbin_technical_error" name="errbin_technical_error">
-                                <label for="errbin_technical_error">Technical Error</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="errbin_authentication_error" name="errbin_authentication_error">
-                                <label for="errbin_authentication_error">Authentication Error</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="errbin_card_error" name="errbin_card_error">
-                                <label for="errbin_card_error">Card Error</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
                                 <input type="checkbox" id="has_error" name="has_error">
                                 <label for="has_error">Has Error</label>
                             </div>
@@ -375,18 +379,6 @@
                             <div class="checkbox-group">
                                 <input type="checkbox" id="online_flag" name="online_flag">
                                 <label for="online_flag">Online Transaction</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="usechip_swipe_transaction" name="usechip_swipe_transaction">
-                                <label for="usechip_swipe_transaction">Swipe Transaction</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="usechip_chip_transaction" name="usechip_chip_transaction">
-                                <label for="usechip_chip_transaction">Chip Transaction</label>
                             </div>
                         </div>
                     </div>
@@ -405,6 +397,7 @@
             <div class="result-container" id="resultContainer">
                 <div class="result-title" id="resultTitle"></div>
                 <div class="result-confidence" id="resultConfidence"></div>
+                <div class="result-details" id="resultDetails"></div>
                 <div class="feedback-section">
                     <p><strong>Was this prediction correct?</strong></p>
                     <div class="feedback-buttons">
@@ -441,14 +434,8 @@
                 country_development: formData.get('country_development'),
                 transaction_datetime: formData.get('transaction_datetime'),
                 mcc: parseInt(formData.get('mcc')),
-                errbin_insufficient_balance: formData.get('errbin_insufficient_balance') === 'on' ? 1 : 0,
-                errbin_technical_error: formData.get('errbin_technical_error') === 'on' ? 1 : 0,
-                errbin_authentication_error: formData.get('errbin_authentication_error') === 'on' ? 1 : 0,
-                errbin_card_error: formData.get('errbin_card_error') === 'on' ? 1 : 0,
                 has_error: formData.get('has_error') === 'on' ? 1 : 0,
-                online_flag: formData.get('online_flag') === 'on' ? 1 : 0,
-                usechip_swipe_transaction: formData.get('usechip_swipe_transaction') === 'on' ? 1 : 0,
-                usechip_chip_transaction: formData.get('usechip_chip_transaction') === 'on' ? 1 : 0
+                online_flag: formData.get('online_flag') === 'on' ? 1 : 0
             };
 
             try {
@@ -479,12 +466,38 @@
         });
 
         function displayResult(result) {
-            const isFraud = result.prediction === 'fraud' || result.prediction === 1;
+            const isFraud = result.prediction === 'fraud' || result.prediction === 1 || result.is_fraud === 1;
             const confidence = (result.confidence * 100).toFixed(2);
+            
+            // Get probability values (use direct values if available, otherwise calculate from confidence)
+            const probFraud = result.prob_fraud !== undefined ? 
+                (result.prob_fraud * 100).toFixed(2) : confidence;
+            const probNotFraud = result.prob_not_fraud !== undefined ? 
+                (result.prob_not_fraud * 100).toFixed(2) : (100 - parseFloat(confidence)).toFixed(2);
+            const isFraudValue = result.is_fraud !== undefined ? result.is_fraud : (isFraud ? 1 : 0);
             
             resultContainer.className = 'result-container show ' + (isFraud ? 'result-fraud' : 'result-not-fraud');
             document.getElementById('resultTitle').textContent = isFraud ? '⚠️ FRAUD DETECTED' : '✅ Transaction is Safe';
             document.getElementById('resultConfidence').textContent = `Confidence: ${confidence}%`;
+            
+            // Display detailed probabilities
+            const detailsHtml = `
+                <table>
+                    <tr>
+                        <td>Probability of Fraud:</td>
+                        <td>${probFraud}%</td>
+                    </tr>
+                    <tr>
+                        <td>Probability of Not Fraud:</td>
+                        <td>${probNotFraud}%</td>
+                    </tr>
+                    <tr>
+                        <td>Is Fraud (Binary):</td>
+                        <td>${isFraudValue} (${isFraudValue === 1 ? 'Fraud' : 'Not Fraud'})</td>
+                    </tr>
+                </table>
+            `;
+            document.getElementById('resultDetails').innerHTML = detailsHtml;
             
             currentTransactionId = result.transaction_id;
         }
